@@ -1,0 +1,70 @@
+version: "3"
+name: "lds"
+
+services:
+  postgres:
+    image: "postgres:15.3"
+    restart: "always"
+    ports:
+      - "127.0.0.1:${SVC_POSTGRES_LOCAL_PORT}:5432"
+    volumes:
+      - "data_postgres:/var/lib/postgresql/data"
+      - "./assets/postgres/init/:/docker-entrypoint-initdb.d/"
+    environment:
+      POSTGRES_USER: "${SVC_POSTGRES_USERNAME}"
+      POSTGRES_PASSWORD: "${SVC_POSTGRES_PASSWORD}"
+
+  pgadmin:
+    image: "dpage/pgadmin4:7.5"
+    restart: "always"
+    volumes:
+      - "data_pgadmin:/var/lib/pgadmin"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${SVC_PGADMIN_DEFAULT_EMAIL}"
+      PGADMIN_DEFAULT_PASSWORD: "${SVC_PGADMIN_DEFAULT_PASSWORD}"
+      PGADMIN_DISABLE_POSTFIX: "True"
+      PGADMIN_CONFIG_MAIL_SERVER: "\"mocksmtp\""
+      PGADMIN_CONFIG_MAIL_PORT: "1025"
+      PGADMIN_CONFIG_MAIL_USE_SSL: "False"
+      PGADMIN_CONFIG_MAIL_USE_TLS: "False"
+      PGADMIN_CONFIG_MAIL_USERNAME: "\"\""
+      PGADMIN_CONFIG_MAIL_PASSWORD: "\"\""
+      PGADMIN_CONFIG_MAIL_DEBUG: "False"
+
+  mocksmtp:
+    image: "mailhog/mailhog:v1.0.1"
+    restart: "always"
+    ports:
+      - "127.0.0.1:${SVC_MOCKSMTP_LOCAL_PORT_SMTP}:1025"
+
+  keycloak:
+    image: "quay.io/keycloak/keycloak:22.0.1"
+    restart: "always"
+    volumes:
+      - "./assets/keycloak/themes/:/opt/keycloak/themes/"
+    environment:
+      KEYCLOAK_ADMIN: "${SVC_KEYCLOAK_ADMIN_USERNAME}"
+      KEYCLOAK_ADMIN_PASSWORD: "${SVC_KEYCLOAK_ADMIN_PASSWORD}"
+      KC_DB: "postgres"
+      KC_DB_URL: "jdbc:postgresql://postgres:5432/keycloak?ssl=false"
+      KC_DB_USERNAME: "postgres"
+      KC_DB_PASSWORD: "postgres"
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+    command: ["start", "--proxy=edge", "--hostname-strict=false", "--spi-theme-static-max-age=-1", "--spi-theme-cache-themes=false", "--spi-theme-cache-templates=false", "--spi-theme-welcome-theme=custom"]
+
+  caddy:
+    image: "caddy:2.7.3"
+    restart: "always"
+    volumes:
+      - "data_caddy:/data"
+      - "./assets/caddy/htdocs:/opt/htdocs"
+      - "./assets/caddy/Caddyfile:/etc/caddy/Caddyfile"
+    ports:
+      - "127.0.0.1:${SVC_CADDY_LOCAL_PORT}:80"
+    environment: []
+
+volumes:
+  data_postgres:
+  data_pgadmin:
+  data_caddy:
