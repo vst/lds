@@ -1,5 +1,10 @@
 # Local Development Services
 
+> **NOTE**
+>
+> This repository is archived as I have migrated to [arion]-powered
+> NixOS modules for local development services.
+
 This repository contains tools for provisioning some services which I use for
 hacking various projects.
 
@@ -33,3 +38,6 @@ docker compose up -d
 ```
 
 Visit <http://dev.local>
+
+
+[arion]: https://docs.hercules-ci.com/arion
